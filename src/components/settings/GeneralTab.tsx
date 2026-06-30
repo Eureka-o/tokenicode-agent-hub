@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState } from 'react';
-import { useSettingsStore, MODEL_OPTIONS, ColorTheme, BackgroundTheme } from '../../stores/settingsStore';
+import { useSettingsStore, MODEL_OPTIONS, ColorTheme, BackgroundTheme, FontFamily } from '../../stores/settingsStore';
 import { useProviderStore } from '../../stores/providerStore';
 import { useT } from '../../lib/i18n';
 import { displayDeepSeekModelName } from '../../lib/deepseek-models';
@@ -74,6 +74,14 @@ const BACKGROUND_THEMES: { id: BackgroundTheme; label: string; accent: string; p
   },
 ];
 
+const FONT_FAMILY_OPTIONS: { id: FontFamily; label: string; sample: string }[] = [
+  { id: 'microsoft', label: '微软雅黑 UI', sample: '中文 Aa 123' },
+  { id: 'system', label: '系统清晰字体', sample: '中文 Aa 123' },
+  { id: 'sourceHan', label: '思源黑体 / Noto', sample: '中文 Aa 123' },
+  { id: 'lxgw', label: '霞鹜文楷', sample: '中文 Aa 123' },
+  { id: 'mono', label: '等宽字体', sample: '中文 Aa 123' },
+];
+
 /* Mini app preview — simplified chat interface thumbnail */
 function ThemePreview({ color }: { color: string }) {
   return (
@@ -114,12 +122,14 @@ export function GeneralTab() {
   const locale = useSettingsStore((s) => s.locale);
   const selectedModel = useSettingsStore((s) => s.selectedModel);
   const fontSize = useSettingsStore((s) => s.fontSize);
+  const fontFamily = useSettingsStore((s) => s.fontFamily);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const setColorTheme = useSettingsStore((s) => s.setColorTheme);
   const setBackgroundTheme = useSettingsStore((s) => s.setBackgroundTheme);
   const setLocale = useSettingsStore((s) => s.setLocale);
   const setSelectedModel = useSettingsStore((s) => s.setSelectedModel);
   const setFontSize = useSettingsStore((s) => s.setFontSize);
+  const setFontFamily = useSettingsStore((s) => s.setFontFamily);
   const aiAvatarUrl = useSettingsStore((s) => s.aiAvatarUrl);
   const setAiAvatarUrl = useSettingsStore((s) => s.setAiAvatarUrl);
   const userAvatarUrl = useSettingsStore((s) => s.userAvatarUrl);
@@ -347,13 +357,33 @@ export function GeneralTab() {
             </span>
             <button
               onClick={() => setFontSize(fontSize + 1)}
-              disabled={fontSize >= 24}
+              disabled={fontSize >= 36}
               className="w-8 h-8 text-[13px] font-bold text-text-primary
                 hover:bg-bg-secondary transition-smooth
                 disabled:opacity-30 disabled:cursor-not-allowed
                 flex items-center justify-center border-l border-border-subtle"
             >+</button>
           </div>
+        </div>
+
+        {/* Font Family */}
+        <div>
+          <h3 className="text-[13px] font-medium text-text-primary mb-2">{t('settings.fontFamily')}</h3>
+          <select
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+            className="h-8 min-w-40 px-2 rounded-lg bg-bg-secondary border border-border-subtle
+              text-[13px] text-text-primary outline-none focus:border-accent/60"
+          >
+            {FONT_FAMILY_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label} · {option.sample}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-text-tertiary">
+            {t('settings.fontFamilyHint')}
+          </p>
         </div>
 
         {/* Default Model */}

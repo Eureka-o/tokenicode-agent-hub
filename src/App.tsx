@@ -10,7 +10,7 @@ import { ChangelogModal } from './components/shared/ChangelogModal';
 import { Toast } from './components/shared/Toast';
 import { useSettingsStore } from './stores/settingsStore';
 import { useProviderStore } from './stores/providerStore';
-import type { ColorTheme, Theme } from './stores/settingsStore';
+import type { ColorTheme, FontFamily, Theme } from './stores/settingsStore';
 import { useFileStore } from './stores/fileStore';
 import { useChatStore } from './stores/chatStore';
 import { useSessionStore } from './stores/sessionStore';
@@ -27,6 +27,14 @@ const THEME_ACCENT_COLORS: Record<ColorTheme, string> = {
   blue: '#4E80F7',
   orange: '#C47252',
   green: '#57A64B',
+};
+
+const FONT_FAMILY_STACKS: Record<FontFamily, string> = {
+  system: '"Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif',
+  microsoft: '"Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", Arial, sans-serif',
+  sourceHan: '"Source Han Sans SC", "Noto Sans CJK SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei UI", sans-serif',
+  lxgw: '"LXGW WenKai Screen", "LXGW WenKai", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+  mono: '"Cascadia Code", "JetBrains Mono", "SF Mono", Consolas, "Microsoft YaHei UI", monospace',
 };
 
 /** Render the app icon SVG as base64 PNG for macOS Dock.
@@ -66,6 +74,7 @@ function App() {
   const colorTheme = useSettingsStore((s) => s.colorTheme);
   const backgroundTheme = useSettingsStore((s) => s.backgroundTheme);
   const fontSize = useSettingsStore((s) => s.fontSize);
+  const fontFamily = useSettingsStore((s) => s.fontFamily);
   const settingsOpen = useSettingsStore((s) => s.settingsOpen);
   const workingDirectory = useSettingsStore((s) => s.workingDirectory);
   const lastSeenVersion = useSettingsStore((s) => s.lastSeenVersion);
@@ -246,6 +255,12 @@ function App() {
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}px`;
   }, [fontSize]);
+
+  // Apply font family to document root
+  useEffect(() => {
+    const stack = FONT_FAMILY_STACKS[fontFamily] || FONT_FAMILY_STACKS.microsoft;
+    document.documentElement.style.setProperty('--tokenicode-font-family', stack);
+  }, [fontFamily]);
 
   // Cmd+/- global shortcut for font size
   useEffect(() => {

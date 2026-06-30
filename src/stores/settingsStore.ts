@@ -16,6 +16,7 @@ export type BackgroundTheme = 'garden' | 'sakura' | 'lake' | 'dusk' | 'ink';
 export type SecondaryPanelTab = 'files' | 'preview' | 'skills' | 'plugins';
 export type ModelId = 'claude-opus-4-6' | 'claude-opus-4-6-1m' | 'claude-sonnet-4-6' | 'claude-haiku-4-5-20251001';
 export type SessionMode = 'code' | 'ask' | 'plan' | 'bypass';
+export type FontFamily = 'system' | 'microsoft' | 'sourceHan' | 'lxgw' | 'mono';
 /** CLI permission mode for the SDK control protocol */
 export type CliPermissionMode = 'acceptEdits' | 'default' | 'plan' | 'bypassPermissions';
 export type Locale = 'zh' | 'en';
@@ -65,6 +66,8 @@ interface SettingsState {
   locale: Locale;
   /** Global UI font size in px (default 18) */
   fontSize: number;
+  /** Global UI font family preset */
+  fontFamily: FontFamily;
   /** Sidebar width in px (default 280) */
   sidebarWidth: number;
   /** Whether the CLI setup wizard has been completed or skipped */
@@ -111,6 +114,7 @@ interface SettingsState {
   setLocale: (locale: Locale) => void;
   toggleLocale: () => void;
   setFontSize: (size: number) => void;
+  setFontFamily: (family: FontFamily) => void;
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
   setSidebarWidth: (width: number) => void;
@@ -153,6 +157,7 @@ export const useSettingsStore = create<SettingsState>()(
       sessionMode: 'bypass',
       locale: 'zh',
       fontSize: 18,
+      fontFamily: 'microsoft',
       sidebarWidth: 280,
       setupCompleted: false,
       thinkingLevel: 'medium' as ThinkingLevel,
@@ -220,6 +225,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       setFontSize: (size) =>
         set(() => ({ fontSize: Math.max(10, Math.min(36, size)) })),
+
+      setFontFamily: (fontFamily) =>
+        set(() => ({ fontFamily })),
 
       increaseFontSize: () =>
         set((state) => ({ fontSize: Math.min(36, state.fontSize + 1) })),
@@ -327,6 +335,7 @@ export const useSettingsStore = create<SettingsState>()(
         sessionMode: state.sessionMode,
         locale: state.locale,
         fontSize: state.fontSize,
+        fontFamily: state.fontFamily,
         sidebarWidth: state.sidebarWidth,
         setupCompleted: state.setupCompleted,
         thinkingLevel: state.thinkingLevel,
