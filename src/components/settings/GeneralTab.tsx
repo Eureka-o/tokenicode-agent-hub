@@ -72,6 +72,12 @@ const BACKGROUND_THEMES: { id: BackgroundTheme; label: string; accent: string; p
     accent: '#7E8792',
     preview: 'radial-gradient(circle at 18% 90%, #C4CABA 0 18%, transparent 20%), linear-gradient(135deg, #F8F5EC, #E6E2D5)',
   },
+  {
+    id: 'vscode',
+    label: 'VS Code Dark',
+    accent: '#007ACC',
+    preview: 'linear-gradient(90deg, #252526 0 24%, #1E1E1E 24% 100%)',
+  },
 ];
 
 const FONT_FAMILY_OPTIONS: { id: FontFamily; label: string; sample: string }[] = [

@@ -242,7 +242,7 @@ function App() {
   // Apply watercolor background skin class to document
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('bg-theme-garden', 'bg-theme-sakura', 'bg-theme-lake', 'bg-theme-dusk', 'bg-theme-ink');
+    root.classList.remove('bg-theme-garden', 'bg-theme-sakura', 'bg-theme-lake', 'bg-theme-dusk', 'bg-theme-ink', 'bg-theme-vscode');
     root.classList.add(`bg-theme-${backgroundTheme}`);
   }, [backgroundTheme]);
 

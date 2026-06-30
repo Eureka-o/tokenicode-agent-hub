@@ -906,9 +906,65 @@ input, textarea, [contenteditable="true"],
   --skin-success-text: #758B68;
 }
 
+.bg-theme-vscode {
+  --color-bg-primary: #1E1E1E;
+  --color-bg-secondary: #252526;
+  --color-bg-tertiary: #2D2D30;
+  --color-bg-chat: #1E1E1E;
+  --color-bg-sidebar: #252526;
+  --color-bg-input: #1E1E1E;
+  --color-bg-user-msg: #0E639C;
+  --color-bg-assistant-msg: #1E1E1E;
+  --color-bg-tool: #252526;
+  --color-bg-thinking: #252526;
+  --color-bg-card: #1E1E1E;
+  --color-bg-nav-active: rgba(0, 122, 204, 0.18);
+  --color-text-primary: #D4D4D4;
+  --color-text-secondary: #CCCCCC;
+  --color-text-tertiary: #858585;
+  --color-text-inverse: #FFFFFF;
+  --color-text-muted: #A6A6A6;
+  --color-border: #3C3C3C;
+  --color-border-subtle: #2D2D30;
+  --color-border-focus: #007ACC;
+  --color-accent: #007ACC;
+  --color-accent-light: #3794FF;
+  --color-accent-hover: #1177BB;
+  --color-accent-glow: rgba(0, 122, 204, 0.22);
+  --color-success: #89D185;
+  --color-error: #F48771;
+  --color-warning: #CCA700;
+  --color-gradient-start: #007ACC;
+  --color-gradient-mid: #168BD1;
+  --color-gradient-end: #3794FF;
+  --skin-body-background: #1E1E1E;
+  --skin-app-background: #1E1E1E;
+  --skin-border-strong: #2D2D30;
+  --skin-border-soft: #3C3C3C;
+  --skin-dashed-border: transparent;
+  --skin-decor: "";
+  --skin-decor-color: transparent;
+  --skin-grid-line-a: transparent;
+  --skin-grid-line-b: transparent;
+  --skin-accent-gradient: linear-gradient(180deg, #0E639C 0%, #007ACC 100%);
+  --skin-accent-border: rgba(55, 148, 255, 0.36);
+  --skin-hover-bg: #2A2D2E;
+  --skin-table-head: #252526;
+  --skin-resize-bg: #252526;
+  --skin-resize-line: #3C3C3C;
+  --skin-scrollbar: #424242;
+  --skin-accent-text: #3794FF;
+  --skin-warning-text: #CCA700;
+  --skin-success-text: #89D185;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-glow: none;
+  --color-icon-slash: #FFFFFF;
+}
+
 body {
-  font-family: "Segoe Print", "Comic Sans MS", "Microsoft YaHei UI",
-    "Microsoft YaHei", "Inter", sans-serif;
+  font-family: var(--tokenicode-font-family, "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", Arial, sans-serif);
   background: var(--skin-body-background);
 }
 
@@ -973,6 +1029,29 @@ select,
 
 button {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.bg-theme-vscode button {
+  text-shadow: none;
+}
+
+.bg-theme-vscode .gradient-bg {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.bg-theme-vscode .gradient-bg::before,
+.bg-theme-vscode .gradient-bg::after {
+  display: none;
+}
+
+.bg-theme-vscode .bg-bg-sidebar,
+.bg-theme-vscode .bg-bg-chat,
+.bg-theme-vscode .bg-bg-primary,
+.bg-theme-vscode .bg-bg-card,
+.bg-theme-vscode .bg-bg-input {
+  background-image: none;
 }
 
 .rounded-lg,
