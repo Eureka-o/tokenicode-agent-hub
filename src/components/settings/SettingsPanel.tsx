@@ -8,8 +8,9 @@ import { GeneralTab } from './GeneralTab';
 import { ProviderTab } from './ProviderTab';
 import { CliTab } from './CliTab';
 import { McpTab } from './McpTab';
+import { LocalModelsTab } from './LocalModelsTab';
 
-type SettingsTab = 'general' | 'provider' | 'cli' | 'mcp';
+type SettingsTab = 'general' | 'provider' | 'cli' | 'localModels' | 'mcp';
 
 const TAB_ICONS: Record<SettingsTab, React.ReactNode> = {
   general: (
@@ -31,6 +32,13 @@ const TAB_ICONS: Record<SettingsTab, React.ReactNode> = {
       <path d="M4 6l3 2.5L4 11M9 11h3" />
     </svg>
   ),
+  localModels: (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="12" height="10" rx="2" />
+      <path d="M5 6h6M5 9h3" />
+      <circle cx="11" cy="9" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
   mcp: (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
       <rect x="1" y="3" width="14" height="4" rx="1.5" />
@@ -45,6 +53,7 @@ const TAB_ITEMS: { id: SettingsTab; labelKey: string }[] = [
   { id: 'general', labelKey: 'settings.tab.general' },
   { id: 'provider', labelKey: 'settings.tab.provider' },
   { id: 'cli', labelKey: 'settings.tab.cli' },
+  { id: 'localModels', labelKey: '本地模型' },
   { id: 'mcp', labelKey: 'settings.tab.mcp' },
 ];
 
@@ -120,6 +129,7 @@ export function SettingsPanel() {
             {activeTab === 'general' && <GeneralTab />}
             {activeTab === 'provider' && <ProviderTab />}
             {activeTab === 'cli' && <CliTab />}
+            {activeTab === 'localModels' && <LocalModelsTab />}
             {activeTab === 'mcp' && <McpTab />}
           </div>
         </div>

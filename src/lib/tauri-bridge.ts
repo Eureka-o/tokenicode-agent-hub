@@ -227,6 +227,26 @@ export interface NodeEnvStatus {
   npm_available: boolean;
 }
 
+export interface LocalModelInfo {
+  name: string;
+  id: string;
+  size: string;
+  modified: string;
+}
+
+export interface LocalModelServiceStatus {
+  installed: boolean;
+  version: string | null;
+  models: LocalModelInfo[];
+  error: string | null;
+}
+
+export interface LocalModelPullEvent {
+  model: string;
+  stream: 'stdout' | 'stderr' | 'status';
+  line: string;
+}
+
 export interface ProvidersFile {
   version: number;
   activeProviderId: string | null;
@@ -503,6 +523,15 @@ export const bridge = {
   installNodeEnv: () =>
     invoke<void>('install_node_env'),
 
+  checkLocalModelService: () =>
+    invoke<LocalModelServiceStatus>('check_local_model_service'),
+
+  listLocalModels: () =>
+    invoke<LocalModelInfo[]>('list_local_models'),
+
+  pullLocalModel: (model: string) =>
+    invoke<void>('pull_local_model', { model }),
+
   startClaudeLogin: () =>
     invoke<void>('start_claude_login'),
 
@@ -670,6 +699,15 @@ export function onDownloadProgress(
 ): Promise<UnlistenFn> {
   return listen<DownloadProgressEvent>(
     'setup:download:progress',
+    (event) => callback(event.payload),
+  );
+}
+
+export function onLocalModelPullProgress(
+  callback: (event: LocalModelPullEvent) => void,
+): Promise<UnlistenFn> {
+  return listen<LocalModelPullEvent>(
+    'local-model:pull-progress',
     (event) => callback(event.payload),
   );
 }
