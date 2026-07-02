@@ -349,7 +349,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         ...tab,
         partialText: tab.partialText + text,
         isStreaming: true,
-        activityStatus: { phase: 'writing' as ActivityPhase },
+        ...(tab.activityStatus.phase !== 'writing' ? { activityStatus: { phase: 'writing' as ActivityPhase } } : {}),
       }));
       return result ?? {};
     }),
@@ -360,7 +360,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         ...tab,
         partialThinking: tab.partialThinking + text,
         isStreaming: true,
-        activityStatus: { phase: 'thinking' as ActivityPhase },
+        ...(tab.activityStatus.phase !== 'thinking' ? { activityStatus: { phase: 'thinking' as ActivityPhase } } : {}),
       }));
       return result ?? {};
     }),
@@ -388,10 +388,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   setActivityStatus: (tabId, status) =>
     set((state) => {
-      const result = updateTab(state.tabs, tabId, (tab) => ({
-        ...tab,
-        activityStatus: status,
-      }));
+      const result = updateTab(state.tabs, tabId, (tab) => {
+        if (tab.activityStatus.phase === status.phase && tab.activityStatus.toolName === status.toolName) return tab;
+        return { ...tab, activityStatus: status };
+      });
       return result ?? {};
     }),
 

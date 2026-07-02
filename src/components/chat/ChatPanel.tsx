@@ -481,19 +481,27 @@ export function ChatPanel() {
   const userScrollingUpRef = useRef(false);
   // Show "scroll to bottom" button when user is far from bottom
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const showScrollBtnRef = useRef(false);
+  const scrollRafRef = useRef(0);
 
-  // Track whether user is near the bottom of the scroll container
+  // Track whether user is near the bottom of the scroll container, throttled via rAF
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Consider "near bottom" if within 80px of the end
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     isNearBottomRef.current = nearBottom;
-    // Show scroll-to-bottom button when far from bottom (>300px)
-    setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 300);
-    // Reset the scroll-up lock once user returns to bottom
     if (nearBottom) {
       userScrollingUpRef.current = false;
+    }
+    // Only update React state when the boolean actually changes, and throttle via rAF
+    const far = el.scrollHeight - el.scrollTop - el.clientHeight > 300;
+    if (far !== showScrollBtnRef.current) {
+      showScrollBtnRef.current = far;
+      if (scrollRafRef.current) return;
+      scrollRafRef.current = requestAnimationFrame(() => {
+        scrollRafRef.current = 0;
+        setShowScrollBtn(showScrollBtnRef.current);
+      });
     }
   }, []);
 
@@ -516,7 +524,7 @@ export function ChatPanel() {
     if (isNearBottomRef.current && !userScrollingUpRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, partialText, partialThinking, activityStatus]);
+  }, [messages, partialText, partialThinking]);
 
   // Auto-scroll the internal thinking <pre> to bottom as new content streams in
   useEffect(() => {
@@ -635,7 +643,7 @@ export function ChatPanel() {
       <div className="flex flex-1 min-h-0 relative">
       {/* Main chat area */}
       <div className="flex flex-col flex-1 min-w-0">
-      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-5 py-6 selectable">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-5 py-6 selectable chat-scroll-container">
         {!workingDirectory && messages.length === 0 && !isStreaming ? (
           <WelcomeScreen />
         ) : messages.length === 0 && !isStreaming ? (
@@ -682,7 +690,7 @@ export function ChatPanel() {
                 }
               }
               return (
-                <div key={msg.id} className={spacing}>
+                <div key={msg.id} className={`${spacing} chat-message-item`}>
                   <MessageBubble message={msg} isFirstInGroup={isFirstInGroup} />
                 </div>
               );

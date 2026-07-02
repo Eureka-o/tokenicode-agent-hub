@@ -579,6 +579,10 @@ export function ConversationList() {
     setRenamingSessionId(session.id);
   }, []);
 
+  const handleRenameDone = useCallback(() => {
+    setRenamingSessionId(null);
+  }, []);
+
   const handleSelectMode = useCallback((_project: string) => {
     setMultiSelect(true);
     setSelectedIds(new Set());
@@ -675,7 +679,7 @@ export function ConversationList() {
           onNewSession={handleNewSessionInProject}
           onToggleCheck={handleToggleCheck}
           renamingSessionId={renamingSessionId}
-          onRenameDone={() => setRenamingSessionId(null)}
+          onRenameDone={handleRenameDone}
         />
         );
       })}
@@ -712,7 +716,7 @@ export function ConversationList() {
                 onDelete={handleDeleteSingle}
                 onToggleCheck={handleToggleCheck}
                 triggerRename={renamingSessionId === session.id}
-                onRenameDone={() => setRenamingSessionId(null)}
+                onRenameDone={handleRenameDone}
               />
             );
           })}

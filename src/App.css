@@ -406,6 +406,7 @@ input, textarea, [contenteditable="true"],
 }
 .animate-pulse-soft {
   animation: pulse-soft 1.5s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* Indeterminate progress bar */
@@ -415,6 +416,7 @@ input, textarea, [contenteditable="true"],
 }
 .animate-progress {
   animation: progress-indeterminate 1.5s ease-in-out infinite;
+  will-change: transform;
 }
 
 /* Scale-in for cards */
@@ -434,6 +436,7 @@ input, textarea, [contenteditable="true"],
 .animate-spin-slow {
   animation: spin-slow 2s linear infinite;
   display: inline-block;
+  will-change: transform;
 }
 
 /* Smooth transitions for all interactive elements */
@@ -1246,4 +1249,32 @@ thead {
 .preview-action-btn:hover {
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
+}
+
+/* ================================================================
+   Render optimization: skip off-screen content for long lists
+   ================================================================ */
+
+/* Message bubbles and conversation items — tell the browser it can
+   skip rendering elements far outside the viewport. */
+.chat-message-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
+
+.conversation-list-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
+}
+
+/* Scroll containers that don't need size containment from children */
+.chat-scroll-container {
+  contain: layout style;
+}
+
+/* GPU-composited animations only use transform/opacity,
+   promote to own layer to avoid repainting other elements. */
+.animate-spin,
+.animate-ping {
+  will-change: transform;
 }

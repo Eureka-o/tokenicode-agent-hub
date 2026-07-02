@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { SessionListItem } from '../../lib/tauri-bridge';
 import { useT } from '../../lib/i18n';
 import { t as tStatic } from '../../lib/i18n';
@@ -68,7 +68,7 @@ interface SessionItemProps {
   onRenameDone?: () => void;
 }
 
-export function SessionItem({
+export const SessionItem = memo(function SessionItem({
   session,
   isSelected,
   isRunning,
@@ -158,7 +158,7 @@ export function SessionItem({
       }}
       onContextMenu={(e) => onContextMenu(e, session)}
       className={`w-full text-left pl-7 pr-3 py-1.5 rounded-xl
-        transition-smooth group
+        transition-smooth group conversation-list-item
         ${isArchived ? 'opacity-50' : ''}
         ${isSelected
           ? 'bg-accent/10 ring-1 ring-accent/20'
@@ -262,4 +262,4 @@ export function SessionItem({
       )}
     </button>
   );
-}
+});
