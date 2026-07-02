@@ -15,6 +15,8 @@ const messages: Record<Locale, Record<string, string>> = {
     // Sidebar
     'sidebar.hide': '收起侧栏',
     'sidebar.newChat': '新任务',
+    'sidebar.addProject': '添加文件夹',
+    'sidebar.addProjectTitle': '添加现有文件夹创建项目',
     'sidebar.currentSession': '当前会话',
     'sidebar.lightMode': '浅色模式',
     'sidebar.darkMode': '深色模式',
@@ -727,6 +729,8 @@ const messages: Record<Locale, Record<string, string>> = {
     // Sidebar
     'sidebar.hide': 'Hide sidebar',
     'sidebar.newChat': 'New Task',
+    'sidebar.addProject': 'Add folder',
+    'sidebar.addProjectTitle': 'Add existing folder as project',
     'sidebar.currentSession': 'Current Session',
     'sidebar.lightMode': 'Light Mode',
     'sidebar.darkMode': 'Dark Mode',

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useSettingsStore, MODEL_OPTIONS } from '../../stores/settingsStore';
 import { useChatStore, useActiveTab } from '../../stores/chatStore';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -33,6 +34,32 @@ export function Sidebar() {
   const sessionMeta = useActiveTab((t) => t.sessionMeta);
   const sessionStatus = useActiveTab((t) => t.sessionStatus);
   const t = useT();
+
+  const startProjectDraft = (folderPath: string) => {
+    useSettingsStore.getState().setWorkingDirectory(folderPath);
+
+    const currentTabId = useSessionStore.getState().selectedSessionId;
+    if (currentTabId) {
+      useChatStore.getState().saveToCache(currentTabId);
+      useAgentStore.getState().saveToCache(currentTabId);
+    }
+
+    const newDraftId = `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    useChatStore.getState().ensureTab(newDraftId);
+    useChatStore.getState().resetTab(newDraftId);
+    useSessionStore.getState().addDraftSession(newDraftId, folderPath);
+  };
+
+  const addExistingProject = async () => {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: t('sidebar.addProjectTitle'),
+    });
+    if (typeof selected === 'string') {
+      startProjectDraft(selected);
+    }
+  };
 
   // Window dragging handled via CSS -webkit-app-region: drag on the top strip
 
@@ -82,34 +109,38 @@ export function Sidebar() {
       {/* New Chat — navigate to WelcomeScreen where user picks a folder */}
       <div className="px-3">
       <button onClick={() => {
-        // Save current session to cache before switching
-        const currentTabId = useSessionStore.getState().selectedSessionId;
-        if (currentTabId) {
-          useChatStore.getState().saveToCache(currentTabId);
-          useAgentStore.getState().saveToCache(currentTabId);
-        }
-
         const workingDirectory = useSettingsStore.getState().workingDirectory;
         if (!workingDirectory) {
           useSessionStore.getState().setSelectedSession(null);
           return;
         }
-
-        const newDraftId = `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        useChatStore.getState().ensureTab(newDraftId);
-        useChatStore.getState().resetTab(newDraftId);
-        useSessionStore.getState().addDraftSession(newDraftId, workingDirectory);
-
+        startProjectDraft(workingDirectory);
       }}
         className="w-full py-2.5 px-4 rounded-[20px] text-sm font-medium
           bg-accent hover:bg-accent-hover text-text-inverse
-          hover:shadow-glow transition-smooth mb-4
+          hover:shadow-glow transition-smooth mb-2
           flex items-center justify-center gap-2">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M8 3v10M3 8h10" />
         </svg>
         {t('sidebar.newChat')}
+      </button>
+      <button
+        onClick={addExistingProject}
+        className="w-full py-2.5 px-4 rounded-[16px] text-sm font-medium
+          border border-border-subtle bg-bg-secondary text-text-primary
+          hover:bg-bg-tertiary hover:border-border-default
+          transition-smooth mb-4 flex items-center justify-center gap-2"
+        title={t('sidebar.addProjectTitle')}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+          stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+          strokeLinejoin="round">
+          <path d="M2.5 4.5h4l1.2 1.5h5.8v6.5a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z" />
+          <path d="M11 8v3M9.5 9.5h3" />
+        </svg>
+        {t('sidebar.addProject')}
       </button>
 
       {/* Current Session — compressed single-line card */}
