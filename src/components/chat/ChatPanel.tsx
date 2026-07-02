@@ -20,6 +20,7 @@ import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 import { SetupWizard } from '../setup/SetupWizard';
 import { AiAvatar } from '../shared/AiAvatar';
 import { displayDeepSeekModelName } from '../../lib/deepseek-models';
+import { parseTurns, type Turn } from '../../lib/turns';
 
 /** Shared plan panel toggle — used by ChatPanel (panel) and InputBar (button) */
 export const usePlanPanelStore = create<{
@@ -383,6 +384,65 @@ function ContextMeter({ sessionMeta, tabId, sessionStatus }: {
   );
 }
 
+function ConversationTimeline({ turns, activeTurnId, showScrollBtn, onJumpTurn, onJumpBottom }: {
+  turns: Turn[];
+  activeTurnId?: string;
+  showScrollBtn: boolean;
+  onJumpTurn: (turn: Turn) => void;
+  onJumpBottom: () => void;
+}) {
+  const t = useT();
+  if (turns.length === 0) return null;
+
+  return (
+    <div className="hidden lg:flex absolute right-3 top-24 bottom-28 z-10
+      flex-col items-center gap-2 pointer-events-none">
+      <div className="flex-1 min-h-0 px-1 py-2 rounded-full
+        bg-bg-card/80 backdrop-blur border border-border-subtle shadow-lg
+        overflow-y-auto scrollbar-none pointer-events-auto">
+        <div className="flex flex-col items-center gap-1.5">
+          {turns.map((turn) => {
+            const active = activeTurnId === turn.userMessageId;
+            return (
+              <button
+                key={turn.userMessageId}
+                onClick={() => onJumpTurn(turn)}
+                className={`group relative w-7 h-7 rounded-full text-[10px]
+                  flex items-center justify-center border transition-smooth
+                  ${active
+                    ? 'bg-accent text-text-inverse border-accent shadow-md'
+                    : 'bg-bg-secondary/70 text-text-tertiary border-border-subtle hover:text-text-primary hover:bg-bg-tertiary'
+                  }`}
+                title={`${t('chat.turn')} ${turn.index}: ${turn.userContent}`}
+              >
+                {turn.index > 99 ? '99+' : turn.index}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={onJumpBottom}
+        className={`pointer-events-auto inline-flex items-center gap-1.5 px-2.5 py-1.5
+          rounded-full border border-border-subtle bg-bg-card/90 backdrop-blur
+          shadow-lg text-xs transition-smooth
+          ${showScrollBtn
+            ? 'text-accent hover:bg-accent/10'
+            : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'
+          }`}
+        title={t('chat.scrollToBottom')}
+      >
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+          stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M7 2v10M3 8l4 4 4-4" />
+        </svg>
+        <span>{t('chat.latest')}</span>
+      </button>
+    </div>
+  );
+}
+
 export function ChatPanel() {
   const t = useT();
   const messages = useActiveTab((t) => t.messages);
@@ -476,6 +536,7 @@ export function ChatPanel() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const thinkingPreRef = useRef<HTMLPreElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const isNearBottomRef = useRef(true);
   // When user scrolls up via wheel, suppress auto-scroll until they return to bottom
   const userScrollingUpRef = useRef(false);
@@ -483,6 +544,54 @@ export function ChatPanel() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const showScrollBtnRef = useRef(false);
   const scrollRafRef = useRef(0);
+  const [activeTurnId, setActiveTurnId] = useState<string | undefined>();
+  const turns = useMemo(() => parseTurns(messages), [messages]);
+
+  const setMessageNode = useCallback((id: string) => (node: HTMLDivElement | null) => {
+    if (node) {
+      messageRefs.current.set(id, node);
+    } else {
+      messageRefs.current.delete(id);
+    }
+  }, []);
+
+  const updateActiveTurnFromScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || turns.length === 0) {
+      setActiveTurnId(undefined);
+      return;
+    }
+
+    const marker = el.scrollTop + 140;
+    let current = turns[0].userMessageId;
+    for (const turn of turns) {
+      const node = messageRefs.current.get(turn.userMessageId);
+      if (!node) continue;
+      if (node.offsetTop <= marker) {
+        current = turn.userMessageId;
+      } else {
+        break;
+      }
+    }
+    setActiveTurnId((prev) => prev === current ? prev : current);
+  }, [turns]);
+
+  const scrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    userScrollingUpRef.current = false;
+    setShowScrollBtn(false);
+    setActiveTurnId(turns[turns.length - 1]?.userMessageId);
+  }, [turns]);
+
+  const jumpToTurn = useCallback((turn: Turn) => {
+    const node = messageRefs.current.get(turn.userMessageId);
+    if (!node) return;
+    userScrollingUpRef.current = true;
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveTurnId(turn.userMessageId);
+  }, []);
 
   // Track whether user is near the bottom of the scroll container, throttled via rAF
   const handleScroll = useCallback(() => {
@@ -503,7 +612,8 @@ export function ChatPanel() {
         setShowScrollBtn(showScrollBtnRef.current);
       });
     }
-  }, []);
+    updateActiveTurnFromScroll();
+  }, [updateActiveTurnFromScroll]);
 
   // Detect intentional upward scroll via wheel event
   useEffect(() => {
@@ -525,6 +635,10 @@ export function ChatPanel() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, partialText, partialThinking]);
+
+  useEffect(() => {
+    updateActiveTurnFromScroll();
+  }, [turns.length, messages.length, updateActiveTurnFromScroll]);
 
   // Auto-scroll the internal thinking <pre> to bottom as new content streams in
   useEffect(() => {
@@ -690,7 +804,7 @@ export function ChatPanel() {
                 }
               }
               return (
-                <div key={msg.id} className={`${spacing} chat-message-item`}>
+                <div key={msg.id} ref={setMessageNode(msg.id)} className={`${spacing} chat-message-item`}>
                   <MessageBubble message={msg} isFirstInGroup={isFirstInGroup} />
                 </div>
               );
@@ -764,19 +878,23 @@ export function ChatPanel() {
         )}
       </div>
 
+      {!showPlanPanel && (
+        <ConversationTimeline
+          turns={turns}
+          activeTurnId={activeTurnId}
+          showScrollBtn={showScrollBtn}
+          onJumpTurn={jumpToTurn}
+          onJumpBottom={scrollToBottom}
+        />
+      )}
+
       {/* Scroll to bottom FAB */}
       {showScrollBtn && (
         <button
-          onClick={() => {
-            const el = scrollRef.current;
-            if (el) {
-              el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-              userScrollingUpRef.current = false;
-            }
-          }}
+          onClick={scrollToBottom}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10
-            w-8 h-8 rounded-full bg-bg-card border border-border-subtle
-            shadow-md hover:shadow-lg flex items-center justify-center
+            inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-card border border-border-subtle
+            shadow-md hover:shadow-lg justify-center
             text-text-muted hover:text-text-primary transition-smooth
             cursor-pointer opacity-80 hover:opacity-100"
           title={t('chat.scrollToBottom')}
@@ -785,6 +903,7 @@ export function ChatPanel() {
             stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M7 2v10M3 8l4 4 4-4" />
           </svg>
+          <span className="text-xs">{t('chat.latest')}</span>
         </button>
       )}
 

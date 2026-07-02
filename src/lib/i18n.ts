@@ -23,9 +23,11 @@ const messages: Record<Locale, Record<string, string>> = {
     // ChatPanel
     'chat.showSidebar': '展开侧栏',
     'chat.running': '运行中',
+    'chat.turn': '第',
     'chat.turns': '轮',
     'chat.toggleFiles': '切换文件面板',
     'chat.scrollToBottom': '滚动到底部',
+    'chat.latest': '最新',
     'chat.welcome': `欢迎使用 ${APP_NAME}`,
     'chat.welcomeWithProject': '开始与 DeepSeek 协作，CLI 会话在后台无缝运行。',
     'chat.welcomeNoProject': '选择一个项目文件夹以开始。',
@@ -733,9 +735,11 @@ const messages: Record<Locale, Record<string, string>> = {
     // ChatPanel
     'chat.showSidebar': 'Show sidebar',
     'chat.running': 'Running',
+    'chat.turn': 'Turn',
     'chat.turns': 'turns',
     'chat.toggleFiles': 'Toggle file panel',
     'chat.scrollToBottom': 'Scroll to bottom',
+    'chat.latest': 'Latest',
     'chat.welcome': `Welcome to ${APP_NAME}`,
     'chat.welcomeWithProject': 'Start working with DeepSeek. Your CLI session runs seamlessly in the background.',
     'chat.welcomeNoProject': 'Select a project folder to get started.',
