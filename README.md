@@ -1,8 +1,110 @@
-# TOKENICODE DeepSeek Alpha
+# TOKENICODE Agent Hub
+
+**Multi-CLI · Multi-Provider · Background-Resident Agent Scheduling GUI**
+
+A fork of [tokenicode-deepseek-alpha](https://github.com/mistydew/tokenicode-deepseek-alpha), evolved into a unified desktop GUI that schedules and manages multiple AI coding agents simultaneously. Built with **Tauri 2 + React 19 + TypeScript**.
+
+---
+
+## ✨ New in Agent Hub (vs. upstream)
+
+| Feature | tokenicode-deepseek-alpha | Agent Hub |
+|---------|--------------------------|-----------|
+| CLI support | Claude Code only | Claude / Codex / Gemini / OpenCode / Custom |
+| Close window | Exits, kills all processes | Configurable: exit / minimize to tray / ask |
+| Background agents | ❌ | ✅ Agents keep running after window hides |
+| System tray | ❌ | ✅ Right-click: show · hide · stop agents · usage · quit |
+| New session dialog | Immediate, no choices | Runtime · Provider · Model · Permission selector |
+| Message metadata | ❌ | ✅ runtime · model · token count per reply |
+| Session tab labels | Plain name | Runtime icon + name |
+| Usage dimensions | Session / Project / Date | + Runtime · Provider · Model · Hour |
+| Provider isolation | Global switch affects all sessions | Snapshot locked per session at start |
+| Runtime settings tab | ❌ | ✅ Shows installed CLIs and versions |
+
+---
+
+## 🚀 Getting Started
+
+### Download
+
+Latest installer → [Releases](../../releases)
+
+### Build via GitHub Actions (no local toolchain needed)
+
+1. Fork this repo
+2. **Actions** → **Release** → **Run workflow**
+3. Download `.exe` from the generated Release
+
+### Build Locally
+
+```bash
+# Requirements: Node 18+, pnpm 9+, Rust stable
+# Windows: Visual Studio Build Tools 2019+ with C++ workload
+
+git clone https://github.com/Eureka-o/tokenicode-agent-hub.git
+cd tokenicode-agent-hub
+pnpm install
+pnpm tauri dev        # dev mode
+pnpm tauri build      # production installer
+```
+
+---
+
+## 🗂️ Architecture
+
+```
+Frontend  React 19 + TypeScript + Zustand 5
+  stores/   session · provider · runtime · settings · usage · chat
+  components/  ChatPanel · NewSessionDialog · RuntimeTab · UsagePanel
+
+Backend  Rust + Tauri 2
+  RuntimeAdapter trait
+    ├── ClaudeRuntime   →  claude CLI
+    ├── CodexRuntime    →  codex app-server  (JSON-RPC 2.0)  [Phase 2]
+    ├── GeminiRuntime   →  gemini CLI                        [Phase 4]
+    └── CustomRuntime   →  user-defined command               [Phase 4]
+  RuntimeManager    routes sessions to adapters
+  ProviderSnapshot  immutable per-session provider config
+  UsageTracker      runtime / provider / model / hour dimensions
+  TrayManager       system tray + configurable close behavior
+```
+
+---
+
+## 🔌 Supported Providers
+
+Anthropic · DeepSeek · OpenAI · Moonshot/Kimi · Qwen/Tongyi · Zhipu/GLM · MiniMax · Ollama · CC Switch · Any OpenAI-compatible endpoint
+
+---
+
+## 🛣️ Roadmap
+
+- **Phase 1** ✅ RuntimeAdapter · system tray · NewSessionDialog · Provider Snapshot · enhanced usage
+- **Phase 2** Codex CLI integration · CC Switch one-click import · provider health monitor
+- **Phase 3** Usage heatmaps · multi-agent broadcast · side-by-side compare
+- **Phase 4** Gemini / OpenCode / Custom CLI runtimes
+
+---
+
+## 🙏 Credits
+
+- [TOKENICODE](https://github.com/yiliqi78/TOKENICODE) — original by yiliqi78
+- [tokenicode-deepseek-alpha](https://github.com/mistydew/tokenicode-deepseek-alpha) — DeepSeek/CC Switch fork by mistydew
+- [openai/codex](https://github.com/openai/codex) — Codex CLI (Phase 2 target)
+
+---
+
+## 📄 License
+
+Apache License 2.0
+
+---
 
 ## 更新记录
 
-### v0.10.12-alpha.1
+### v0.11.0 (Phase 1)
+
+
 
 - 修正上一版对 DeepSeek OpenAI `base_url` 的处理：官网写法 `https://api.deepseek.com` 会请求 `/chat/completions`，不再强行补 `/v1`。
 - 保留 `/v1` 兼容：如果用户显式填写 `https://api.deepseek.com/v1`，仍会请求 `/v1/chat/completions`。

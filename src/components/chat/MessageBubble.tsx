@@ -15,6 +15,10 @@ import { UserAvatar } from '../shared/UserAvatar';
 interface Props {
   message: ChatMessage;
   isFirstInGroup?: boolean;
+  /** Optional runtime metadata shown at the bottom of assistant message bubbles */
+  runtimeName?: string;
+  modelName?: string;
+  totalTokens?: number;
 }
 
 /** Guard against raw content-block objects ({text, type}) being rendered as
@@ -25,7 +29,13 @@ function safeContent(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export const MessageBubble = memo(function MessageBubble({ message, isFirstInGroup = true }: Props) {
+export const MessageBubble = memo(function MessageBubble({
+  message,
+  isFirstInGroup = true,
+  runtimeName,
+  modelName,
+  totalTokens,
+}: Props) {
   if (message.role === 'user') return <UserMsg message={message} />;
   if (message.role === 'system' && message.commandType === 'processing') return <CommandProcessingCard message={message} />;
   if (message.role === 'system' && message.commandType) return <CommandFeedbackMsg message={message} />;
@@ -43,7 +53,15 @@ export const MessageBubble = memo(function MessageBubble({ message, isFirstInGro
   if (message.type === 'permission' && !message.resolved && message.interactionState !== 'resolved') return null;
   if (message.type === 'permission') return <PermissionCard message={message} />;
   if (message.type === 'plan') return <PlanMsg message={message} />;
-  return <AssistantMsg message={message} isFirstInGroup={isFirstInGroup} />;
+  return (
+    <AssistantMsg
+      message={message}
+      isFirstInGroup={isFirstInGroup}
+      runtimeName={runtimeName}
+      modelName={modelName}
+      totalTokens={totalTokens}
+    />
+  );
 });
 
 /* ================================================================
@@ -403,7 +421,14 @@ function CommandFeedbackMsg({ message }: Props) {
 /* ================================================================
    AssistantMsg — markdown with avatar (uses shared MarkdownRenderer)
    ================================================================ */
-function AssistantMsg({ message, isFirstInGroup = true }: Props) {
+function AssistantMsg({ message, isFirstInGroup = true, runtimeName, modelName, totalTokens }: Props) {
+  // Build metadata string: only include defined parts
+  const metaParts: string[] = [];
+  if (runtimeName) metaParts.push(runtimeName);
+  if (modelName) metaParts.push(modelName);
+  if (totalTokens != null) metaParts.push(`${totalTokens} tokens`);
+  const hasMetadata = metaParts.length > 0;
+
   return (
     <div className="flex gap-3">
       {/* Avatar: show only for the first message in a consecutive group */}
@@ -414,6 +439,12 @@ function AssistantMsg({ message, isFirstInGroup = true }: Props) {
       )}
       <div className="flex-1 min-w-0 text-base text-text-primary leading-relaxed">
         <MarkdownRenderer content={safeContent(message.content)} />
+        {/* Metadata line — runtime · model · tokens */}
+        {hasMetadata && (
+          <div className="mt-1.5 text-xs text-zinc-500 select-none">
+            ⚡ {metaParts.join(' · ')}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useRef, useCallback, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import {
   useSettingsStore,
   MODEL_OPTIONS,
@@ -6,6 +7,7 @@ import {
   BackgroundTheme,
   FontFamily,
   ContextWindowMode,
+  TrayCloseAction,
   getContextWindowForModel,
   getAutoCompactThreshold,
 } from '../../stores/settingsStore';
@@ -168,6 +170,28 @@ export function GeneralTab() {
   const setUserAvatarUrl = useSettingsStore((s) => s.setUserAvatarUrl);
   const userDisplayName = useSettingsStore((s) => s.userDisplayName);
   const setUserDisplayName = useSettingsStore((s) => s.setUserDisplayName);
+  const trayCloseAction = useSettingsStore((s) => s.trayCloseAction);
+  const trayAutoMinimize = useSettingsStore((s) => s.trayAutoMinimize);
+  const trayNotifyTaskComplete = useSettingsStore((s) => s.trayNotifyTaskComplete);
+  const trayNotifyPermission = useSettingsStore((s) => s.trayNotifyPermission);
+  const setTraySettings = useSettingsStore((s) => s.setTraySettings);
+
+  const handleTrayChange = useCallback(
+    (patch: Parameters<typeof setTraySettings>[0]) => {
+      setTraySettings(patch);
+      const next = { ...useSettingsStore.getState(), ...patch };
+      invoke('set_tray_settings', {
+        closeAction: next.trayCloseAction,
+        autoMinimize: next.trayAutoMinimize,
+        notifyTaskComplete: next.trayNotifyTaskComplete,
+        notifyPermission: next.trayNotifyPermission,
+      }).catch((e: unknown) => {
+        console.error('[GeneralTab] set_tray_settings failed:', e);
+      });
+    },
+    [setTraySettings],
+  );
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const userFileInputRef = useRef<HTMLInputElement>(null);
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -531,6 +555,86 @@ export function GeneralTab() {
           <p className="mt-2 text-xs text-text-tertiary leading-relaxed">
             这个值会直接决定自动发送 `/compact` 的时机；改完后对当前会话立即生效。
           </p>
+        </div>
+      </div>
+
+      {/* 后台运行 */}
+      <div>
+        <h3 className="text-[13px] font-medium text-text-primary mb-3">后台运行</h3>
+        <div className="space-y-4">
+          {/* 关闭窗口时 */}
+          <div>
+            <p className="text-xs text-text-muted mb-2">关闭窗口时：</p>
+            <div className="space-y-1.5 pl-1">
+              {(
+                [
+                  ['quit', '退出应用'],
+                  ['minimize', '最小化到托盘'],
+                  ['ask', '每次询问'],
+                ] as [TrayCloseAction, string][]
+              ).map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="trayCloseAction"
+                    value={value}
+                    checked={trayCloseAction === value}
+                    onChange={() => handleTrayChange({ trayCloseAction: value })}
+                    className="accent-accent"
+                  />
+                  <span className="text-[13px] text-text-secondary group-hover:text-text-primary transition-smooth">
+                    {label}
+                    {value === 'minimize' && (
+                      <span className="ml-1.5 text-xs text-text-tertiary">（推荐）</span>
+                    )}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="space-y-2 pl-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={trayAutoMinimize}
+                onChange={(e) =>
+                  handleTrayChange({ trayAutoMinimize: e.target.checked })
+                }
+                className="accent-accent"
+              />
+              <span className="text-[13px] text-text-secondary group-hover:text-text-primary transition-smooth">
+                启动后自动进入后台
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={trayNotifyTaskComplete}
+                onChange={(e) =>
+                  handleTrayChange({ trayNotifyTaskComplete: e.target.checked })
+                }
+                className="accent-accent"
+              />
+              <span className="text-[13px] text-text-secondary group-hover:text-text-primary transition-smooth">
+                后台任务完成后发通知
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={trayNotifyPermission}
+                onChange={(e) =>
+                  handleTrayChange({ trayNotifyPermission: e.target.checked })
+                }
+                className="accent-accent"
+              />
+              <span className="text-[13px] text-text-secondary group-hover:text-text-primary transition-smooth">
+                需要权限时发通知
+              </span>
+            </label>
+          </div>
         </div>
       </div>
     </div>

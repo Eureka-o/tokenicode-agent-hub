@@ -1,4 +1,5 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useFileStore } from '../../stores/fileStore';
 import { FilePreview } from '../files/FilePreview';
@@ -46,6 +47,39 @@ export function AppShell({ sidebar, main, secondary }: AppShellProps) {
 
   /* Remember panel states before entering preview mode so we can restore them on exit */
   const panelStateBeforePreview = useRef<{ sidebar: boolean; secondary: boolean } | null>(null);
+
+  /* ── Tauri tray / window-close event listeners ─────────────────── */
+  useEffect(() => {
+    let unlisten1: (() => void) | undefined;
+    let unlisten2: (() => void) | undefined;
+    let unlisten3: (() => void) | undefined;
+
+    (async () => {
+      // close-behavior-ask: Rust backend asks what to do on window close
+      unlisten1 = await listen('close-behavior-ask', () => {
+        const shouldExit = window.confirm('是否退出应用？\n选择"取消"可最小化到托盘。');
+        if (shouldExit) {
+          import('@tauri-apps/plugin-process').then(({ exit }) => exit(0));
+        }
+      });
+
+      // tray-stop-all-agents: relay to the rest of the app via a DOM event
+      unlisten2 = await listen('tray-stop-all-agents', () => {
+        window.dispatchEvent(new CustomEvent('stop-all-agents'));
+      });
+
+      // tray-open-usage: open the usage / profile stats modal
+      unlisten3 = await listen('tray-open-usage', () => {
+        window.dispatchEvent(new CustomEvent('open-usage-modal'));
+      });
+    })();
+
+    return () => {
+      unlisten1?.();
+      unlisten2?.();
+      unlisten3?.();
+    };
+  }, []);
 
   /* Re-calculate default when entering preview mode */
   const prevPreviewMode = useRef(false);

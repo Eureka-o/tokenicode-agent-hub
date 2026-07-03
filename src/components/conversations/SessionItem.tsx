@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { SessionListItem } from '../../lib/tauri-bridge';
 import { useT } from '../../lib/i18n';
 import { t as tStatic } from '../../lib/i18n';
+import { RUNTIME_ICONS, RUNTIME_LABELS, type RuntimeId } from '../../lib/types/runtime';
 
 function formatRelativeTime(ms: number): string {
   if (!ms) return '';
@@ -138,6 +139,11 @@ export const SessionItem = memo(function SessionItem({
     setRenameValue('');
   }, []);
 
+  // Resolve runtime icon and label for this session
+  const runtimeId: RuntimeId = (session as SessionListItem & { runtimeId?: RuntimeId }).runtimeId || 'claude';
+  const runtimeIcon = RUNTIME_ICONS[runtimeId];
+  const runtimeName = RUNTIME_LABELS[runtimeId];
+
   return (
     <button
       onClick={(e) => {
@@ -204,6 +210,13 @@ export const SessionItem = memo(function SessionItem({
                 <path d="M9.5 2L14 6.5L8.5 12L6 14L4.5 11.5L2 9.5L4 7.5L9.5 2z" />
               </svg>
             )}
+            {/* Runtime icon shown before session name */}
+            <span
+              title={runtimeName}
+              className="inline-block mr-1 text-[10px] leading-none align-middle select-none"
+            >
+              {runtimeIcon}
+            </span>
             {name || (session.path === '' ? t('conv.newChat') : t('conv.empty'))}
           </div>
         )}

@@ -1,7 +1,14 @@
 mod commands;
 mod protocol;
+mod runtime;
+mod provider;
+mod tray;
+mod notification;
+mod usage;
 
 use commands::{ManagedProcess, ProcessManager, SessionInfo, StartSessionParams, StdinManager};
+use runtime::manager::RuntimeManager;
+use std::sync::Arc;
 // protocol module kept for ControlRequest (send_control_request) and tests
 use futures_util::StreamExt;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -7494,15 +7501,60 @@ async fn set_dock_icon(app: AppHandle, png_base64: String) -> Result<(), String>
     Ok(())
 }
 
+#[tauri::command]
+async fn list_runtimes(
+    runtime_manager: State<'_, Arc<RuntimeManager>>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let ids = runtime_manager.list_runtimes().await;
+    let mut result = Vec::new();
+    for id in ids {
+        let detected = runtime_manager.detect_runtime(&id).await;
+        let version = runtime_manager.get_runtime_version(&id).await.unwrap_or_default();
+        result.push(serde_json::json!({
+            "id": id.as_str(),
+            "name": match &id {
+                runtime::RuntimeId::Claude => "Claude Code CLI",
+                runtime::RuntimeId::Codex => "Codex CLI",
+                runtime::RuntimeId::Gemini => "Gemini CLI",
+                runtime::RuntimeId::OpenCode => "OpenCode",
+                runtime::RuntimeId::Custom(n) => n.as_str(),
+            },
+            "detected": detected,
+            "version": version,
+        }));
+    }
+    Ok(result)
+}
+
+#[tauri::command]
+async fn get_tray_settings() -> Result<tray::TraySettings, String> {
+    Ok(tray::TraySettings::default())
+}
+
+#[tauri::command]
+async fn set_tray_settings(_settings: tray::TraySettings) -> Result<(), String> {
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(ProcessManager::new())
         .manage(StdinManager::new())
         .manage(WatcherManager::default())
+        .manage(Arc::new(RuntimeManager::new()))
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Default: minimize to tray instead of closing
+                // TODO: read from settings store
+                window.hide().unwrap_or_default();
+                api.prevent_close();
+            }
+        })
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // titleBarStyle: "Overlay" in tauri.conf.json handles macOS traffic lights
@@ -7531,6 +7583,24 @@ pub fn run() {
             #[cfg(desktop)]
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
+
+            // Initialize system tray
+            if let Err(e) = tray::create_tray(app.handle()) {
+                eprintln!("Failed to create system tray: {}", e);
+            }
+
+            // Initialize RuntimeManager with ClaudeRuntime
+            let runtime_manager: tauri::State<Arc<RuntimeManager>> = app.state();
+
+            // Phase 1: ClaudeRuntime is a thin adapter - no process manager args needed
+            let claude_runtime = runtime::claude::ClaudeRuntime::new();
+
+            tauri::async_runtime::block_on(async {
+                runtime_manager.register_runtime(
+                    runtime::RuntimeId::Claude,
+                    Arc::new(claude_runtime),
+                ).await;
+            });
 
             #[cfg(not(desktop))]
             let _ = app;
@@ -7619,6 +7689,9 @@ pub fn run() {
             test_provider_connection,
             respond_permission,
             send_control_request,
+            list_runtimes,
+            get_tray_settings,
+            set_tray_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

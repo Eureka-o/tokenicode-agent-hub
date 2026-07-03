@@ -42,6 +42,8 @@ export interface SessionListItem {
   projectDir: string;
   modifiedAt: number;
   preview: string;
+  /** Runtime that owns this session — defaults to 'claude' when absent */
+  runtimeId?: import('./types/runtime').RuntimeId;
 }
 
 export interface ContentSearchResult {
@@ -275,6 +277,21 @@ export interface UnifiedCommand {
   path?: string;
   immediate: boolean;
   execution?: 'ui' | 'cli' | 'session';
+}
+
+export interface RuntimeInfo {
+  id: string;
+  name: string;
+  detected: boolean;
+  version: string;
+}
+
+export interface TraySettings {
+  close_behavior: 'exit' | 'minimize_to_tray' | 'ask';
+  start_hidden: boolean;
+  auto_start: boolean;
+  notify_on_completion: boolean;
+  notify_on_permission: boolean;
 }
 
 // --- Bridge ---
@@ -597,6 +614,20 @@ export const bridge = {
   /** Send a runtime interrupt command */
   interruptSession: (sessionId: string) =>
     invoke<void>('send_control_request', { sessionId, subtype: 'interrupt', payload: {} }),
+
+  // --- Runtime Management ---
+
+  /** List all supported runtimes with detection status */
+  listRuntimes: () =>
+    invoke<RuntimeInfo[]>('list_runtimes'),
+
+  /** Get current tray behavior settings */
+  getTraySettings: () =>
+    invoke<TraySettings>('get_tray_settings'),
+
+  /** Persist tray behavior settings */
+  setTraySettings: (settings: TraySettings) =>
+    invoke<void>('set_tray_settings', { settings }),
 };
 
 // --- SDK Control Protocol Types ---

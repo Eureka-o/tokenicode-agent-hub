@@ -32,6 +32,7 @@ export function mapSessionModeToPermissionMode(mode: SessionMode): CliPermission
 }
 export type ThinkingLevel = 'off' | 'low' | 'medium' | 'high' | 'max';
 export type ContextWindowMode = 'default' | 'large1m';
+export type TrayCloseAction = 'quit' | 'minimize' | 'ask';
 
 function defaultAutoCompactThreshold(mode: ContextWindowMode): number {
   return mode === 'large1m' ? 800_000 : 160_000;
@@ -110,6 +111,22 @@ interface SettingsState {
   userDisplayName: string;
   /** Whether to show dotfiles (hidden files) in the file tree */
   showHiddenFiles: boolean;
+  /** What to do when the user closes the main window */
+  trayCloseAction: TrayCloseAction;
+  /** Automatically minimize to tray on app launch */
+  trayAutoMinimize: boolean;
+  /** Send a notification when a background task completes */
+  trayNotifyTaskComplete: boolean;
+  /** Send a notification when a permission prompt is waiting */
+  trayNotifyPermission: boolean;
+  /** Close behavior synced with Tauri tray settings (bridge format) */
+  trayCloseBehavior: 'exit' | 'minimize_to_tray' | 'ask';
+  /** Start the app hidden in the tray on launch */
+  trayStartHidden: boolean;
+  /** Notify when a background task completes (bridge format) */
+  trayNotifyOnCompletion: boolean;
+  /** Notify when a permission prompt is waiting (bridge format) */
+  trayNotifyOnPermission: boolean;
 
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
@@ -146,6 +163,12 @@ interface SettingsState {
   setUserAvatarUrl: (url: string) => void;
   setUserDisplayName: (name: string) => void;
   toggleHiddenFiles: () => void;
+  setTraySettings: (settings: {
+    trayCloseAction?: TrayCloseAction;
+    trayAutoMinimize?: boolean;
+    trayNotifyTaskComplete?: boolean;
+    trayNotifyPermission?: boolean;
+  }) => void;
 }
 
 // --- Theme cycle order ---
@@ -193,6 +216,14 @@ export const useSettingsStore = create<SettingsState>()(
       userAvatarUrl: '',
       userDisplayName: '',
       showHiddenFiles: false,
+      trayCloseAction: 'minimize',
+      trayAutoMinimize: false,
+      trayNotifyTaskComplete: true,
+      trayNotifyPermission: true,
+      trayCloseBehavior: 'minimize_to_tray',
+      trayStartHidden: false,
+      trayNotifyOnCompletion: true,
+      trayNotifyOnPermission: true,
 
       toggleTheme: () =>
         set((state) => ({ theme: nextTheme(state.theme) })),
@@ -307,10 +338,18 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ userDisplayName: name.slice(0, 20) })),
       toggleHiddenFiles: () =>
         set((state) => ({ showHiddenFiles: !state.showHiddenFiles })),
+
+      setTraySettings: (settings) =>
+        set((state) => ({
+          trayCloseAction: settings.trayCloseAction ?? state.trayCloseAction,
+          trayAutoMinimize: settings.trayAutoMinimize ?? state.trayAutoMinimize,
+          trayNotifyTaskComplete: settings.trayNotifyTaskComplete ?? state.trayNotifyTaskComplete,
+          trayNotifyPermission: settings.trayNotifyPermission ?? state.trayNotifyPermission,
+        })),
     }),
     {
       name: 'tokenicode-settings',
-      version: 11,
+      version: 13,
       migrate: (persistedState: unknown, version: number) => {
         const persisted = persistedState as Record<string, unknown>;
         if (version === 0) {
@@ -372,6 +411,18 @@ export const useSettingsStore = create<SettingsState>()(
           const mode = persisted.contextWindowMode === 'large1m' ? 'large1m' : 'default';
           persisted.autoCompactThresholdTokens = defaultAutoCompactThreshold(mode);
         }
+        if (version < 12) {
+          persisted.trayCloseAction = 'minimize';
+          persisted.trayAutoMinimize = false;
+          persisted.trayNotifyTaskComplete = true;
+          persisted.trayNotifyPermission = true;
+        }
+        if (version < 13) {
+          persisted.trayCloseBehavior = 'minimize_to_tray';
+          persisted.trayStartHidden = false;
+          persisted.trayNotifyOnCompletion = true;
+          persisted.trayNotifyOnPermission = true;
+        }
         return persisted;
       },
       partialize: (state) => ({
@@ -399,6 +450,14 @@ export const useSettingsStore = create<SettingsState>()(
         userAvatarUrl: state.userAvatarUrl,
         userDisplayName: state.userDisplayName,
         showHiddenFiles: state.showHiddenFiles,
+        trayCloseAction: state.trayCloseAction,
+        trayAutoMinimize: state.trayAutoMinimize,
+        trayNotifyTaskComplete: state.trayNotifyTaskComplete,
+        trayNotifyPermission: state.trayNotifyPermission,
+        trayCloseBehavior: state.trayCloseBehavior,
+        trayStartHidden: state.trayStartHidden,
+        trayNotifyOnCompletion: state.trayNotifyOnCompletion,
+        trayNotifyOnPermission: state.trayNotifyOnPermission,
       }),
     },
   ),

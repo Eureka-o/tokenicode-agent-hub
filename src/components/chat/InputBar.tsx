@@ -31,6 +31,7 @@ import { PlanReviewCard } from './PlanReviewCard';
 import { PermissionCard } from './PermissionCard';
 import { QuestionCard } from './QuestionCard';
 import { TiptapEditor, type TiptapEditorHandle } from './TiptapEditor';
+import { NewSessionDialog, type NewSessionConfig } from './NewSessionDialog';
 import { open } from '@tauri-apps/plugin-dialog';
 // drag-state import removed — tree drag handled by ChatPanel
 
@@ -332,6 +333,30 @@ export function InputBar() {
   // Rewind state
   const [showRewindPanel, setShowRewindPanel] = useState(false);
   const { showRewind, canRewind } = useRewind();
+
+  // New Session Dialog state
+  const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false);
+
+  const handleNewSessionCreate = useCallback((config: NewSessionConfig) => {
+    setNewSessionDialogOpen(false);
+
+    // Apply working directory if provided
+    if (config.cwd) {
+      useSettingsStore.getState().setWorkingDirectory(config.cwd);
+    }
+
+    // Apply model if explicitly chosen (not the placeholder 'default')
+    if (config.model && config.model !== 'default') {
+      useSettingsStore.getState().setSelectedModel(config.model);
+    }
+
+    // Create a new draft session tab and select it
+    const newTabId = `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const cwdForTab = config.cwd || useSettingsStore.getState().workingDirectory;
+    useChatStore.getState().ensureTab(newTabId);
+    useChatStore.getState().resetTab(newTabId);
+    useSessionStore.getState().addDraftSession(newTabId, cwdForTab);
+  }, []);
   // lastEscTime removed — double-Esc rewind disabled (#36/#71)
 
   // Listen for rewind event from /rewind command
@@ -1596,6 +1621,20 @@ export function InputBar() {
             <span className="truncate">{workingDirectoryLabel}</span>
           </button>
 
+          {/* New Session button */}
+          <button
+            onClick={() => setNewSessionDialogOpen(true)}
+            className="p-1.5 rounded-lg text-text-tertiary
+              hover:text-text-primary hover:bg-bg-secondary
+              transition-smooth"
+            title="New Session"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+          </button>
+
           <ModeSelector />
 
           {/* Think toggle */}
@@ -1634,6 +1673,13 @@ export function InputBar() {
           <ModelSelector disabled={isRunning} />
         </div>
       </div>
+
+      {/* New Session Dialog */}
+      <NewSessionDialog
+        open={newSessionDialogOpen}
+        onClose={() => setNewSessionDialogOpen(false)}
+        onCreate={handleNewSessionCreate}
+      />
     </div>
   );
 }
