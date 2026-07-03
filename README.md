@@ -2,9 +2,15 @@
 
 ## 更新记录
 
+### v0.10.12-alpha.1
+
+- 修正上一版对 DeepSeek OpenAI `base_url` 的处理：官网写法 `https://api.deepseek.com` 会请求 `/chat/completions`，不再强行补 `/v1`。
+- 保留 `/v1` 兼容：如果用户显式填写 `https://api.deepseek.com/v1`，仍会请求 `/v1/chat/completions`。
+- 翻译配置面板说明同步改为 DeepSeek 官网写法，避免误导用户改成非官网 URL。
+
 ### v0.10.11-alpha.1
 
-- 修复 Skills 翻译 API 的 OpenAI/DeepSeek Base URL 拼接：填写 `https://api.deepseek.com` 时会自动请求 `/v1/chat/completions`。
+- 修复 Skills 翻译 API 的 OpenAI/DeepSeek Base URL 拼接兼容性，支持裸 base URL、`/v1` 和完整 `/chat/completions` 地址。
 - 翻译请求增加 `Accept-Encoding: identity`，减少代理或网关压缩响应导致的 `error decoding response body`。
 - 翻译配置面板补充 Base URL / Proxy URL 说明，明确 Proxy URL 只是网络代理地址，通常可以留空。
 - 响应读取失败时会给出更明确的排查提示，方便定位 Base URL、代理或网关改写问题。

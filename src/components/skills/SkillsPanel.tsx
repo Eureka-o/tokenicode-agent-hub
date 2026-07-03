@@ -366,7 +366,7 @@ export function SkillsPanel() {
               placeholder:text-text-tertiary outline-none focus:border-border-focus"
           />
           <p className="mb-1.5 text-[10px] text-text-tertiary leading-relaxed">
-            OpenAI / DeepSeek 可填 https://api.deepseek.com，程序会自动补 /v1/chat/completions。
+            DeepSeek 官网写法可直接填 https://api.deepseek.com；如果你的服务要求 /v1，也可以填完整 /v1 地址。
           </p>
           <label className="block mb-1 text-[10px] text-text-tertiary">API Key</label>
           <input

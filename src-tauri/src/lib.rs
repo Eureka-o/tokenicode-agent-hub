@@ -864,7 +864,7 @@ fn provider_messages_endpoint(base_url: &str, api_format: &str) -> String {
         } else if lower.ends_with("/v1") {
             format!("{}/chat/completions", base)
         } else {
-            format!("{}/v1/chat/completions", base)
+            format!("{}/chat/completions", base)
         }
     } else if lower.ends_with("/v1/messages") {
         base.to_string()
@@ -7629,10 +7629,10 @@ mod decode_tests {
     use super::{decode_project_name, provider_messages_endpoint};
 
     #[test]
-    fn test_openai_endpoint_adds_v1_for_bare_base_url() {
+    fn test_openai_endpoint_keeps_deepseek_bare_base_url() {
         assert_eq!(
             provider_messages_endpoint("https://api.deepseek.com", "openai"),
-            "https://api.deepseek.com/v1/chat/completions"
+            "https://api.deepseek.com/chat/completions"
         );
     }
 
