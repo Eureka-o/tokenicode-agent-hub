@@ -3,7 +3,7 @@
 // Cross-platform desktop notifications for background task completion
 // and permission requests when the main window is hidden.
 
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 /// Send a desktop notification
 pub fn notify<R: Runtime>(

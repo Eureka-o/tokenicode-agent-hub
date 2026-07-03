@@ -15,7 +15,6 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::process::Stdio;
-use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -7590,7 +7589,7 @@ pub fn run() {
             }
 
             // Initialize RuntimeManager with ClaudeRuntime
-            let runtime_manager: tauri::State<Arc<RuntimeManager>> = app.state();
+            let runtime_manager: tauri::State<Arc<RuntimeManager>> = app.handle().state();
 
             // Phase 1: ClaudeRuntime is a thin adapter - no process manager args needed
             let claude_runtime = runtime::claude::ClaudeRuntime::new();

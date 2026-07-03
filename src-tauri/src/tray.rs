@@ -6,7 +6,7 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, Runtime, WebviewWindow,
+    AppHandle, Emitter, Manager, Runtime, WebviewWindow,
 };
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -134,7 +134,7 @@ fn load_tray_icon() -> tauri::Result<Image> {
     // Try to load icon from embedded resources
     // Fallback to default icon if not found
     let icon_bytes = include_bytes!("../icons/32x32.png");
-    Image::from_bytes(icon_bytes).map_err(|e| tauri::Error::InvalidIcon(Box::new(e)))
+    Image::from_bytes(icon_bytes).map_err(|e| tauri::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
 }
 
 /// Handle window close event based on settings
