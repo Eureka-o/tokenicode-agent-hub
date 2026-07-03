@@ -130,7 +130,7 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
-fn load_tray_icon() -> tauri::Result<Image> {
+fn load_tray_icon() -> tauri::Result<Image<'static>> {
     // Try to load icon from embedded resources
     // Fallback to default icon if not found
     let icon_bytes = include_bytes!("../icons/32x32.png");
